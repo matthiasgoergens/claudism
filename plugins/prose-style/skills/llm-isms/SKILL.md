@@ -104,6 +104,11 @@ or "about 1%" is all the sentence needs makes the reader wonder what
 they were meant to notice.  Keep exact numbers where they carry the
 argument or the reader can act on them.
 
+**Am I ranking what I cannot measure?**  "The biggest story was X.  Y
+came second." asserts an order nobody measured, and spends two
+sentences doing it.  "The top stories were X and Y." says the same
+thing without the ranking.
+
 **Am I defending a claim instead of narrowing it?**  Three sentences
 guarding against a misreading mean the claim is too broad.  "fs/ntfs3
 rejects both while loading $Volume, so it is not affected by these
