@@ -7,11 +7,11 @@ Kimi Code and any other agent that reads `SKILL.md` folders.
 <!-- llm-isms: off -->
 A typical edit they produce:
 
-> **Before:** The trigger was corporate, not personal.  The detail that
-> matters: the team ran roughly $1bn.  That's the tell.
+> **Before:** The fix was small.  The impact was not.  Here's the
+> thing: the cache was never the bottleneck — the lock was.
 >
-> **After:** The team ran about $1bn.  It left O'Connor a year after UBS
-> sold the unit to Cantor Fitzgerald (Bloomberg, 13 August).
+> **After:** The fix shortens the time the lock is held, which the
+> profile showed was where the time went (`profile.txt`).
 <!-- llm-isms: on -->
 
 The rules come from correcting model-written blog posts, GitHub issues
