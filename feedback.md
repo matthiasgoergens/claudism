@@ -5,7 +5,7 @@
 **Notes**
 
 1. [must] "eighteen months later the best people walked through one together"
-   "Last year" to 13 August 2026 is about fourteen months from the May 2025 agreement, not eighteen. "roughly $11bn" reads as a price but is assets under management. See the fact-check file, rows 5 and E9.
+   UBS agreed the sale in May 2025, about fourteen months before the 13 August report, not eighteen. "roughly $11bn" reads as a price but is assets under management. See the fact-check file, rows 5 and E9.
 
 2. [must] "Two senior people, same bank, same quarter"
    The Khandelwal hire was reported in April 2023, so the "pattern" is one data point. Fact-check file, E3.
