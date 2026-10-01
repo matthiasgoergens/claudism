@@ -10,8 +10,8 @@ A typical edit they produce:
 > **Before:** The trigger was corporate, not personal.  The detail that
 > matters: the team ran roughly $1bn.  That's the tell.
 >
-> **After:** The team ran about $1bn and left after the parent company
-> was sold (Bloomberg, 13 August).
+> **After:** The team ran about $1bn.  It left O'Connor a year after UBS
+> sold the unit to Cantor Fitzgerald (Bloomberg, 13 August).
 <!-- llm-isms: on -->
 
 The rules come from a few months of correcting model-written blog
