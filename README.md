@@ -22,7 +22,7 @@ There are three packs.  Install whichever you want; none needs another.
 
 | Pack | What it does | Skills | Script |
 |------|--------------|--------|--------|
-| `prose-style` | Removes LLM writing tics; keeps your corrections as a growing house style | `llm-isms`, `house-style` | `llm-isms` |
+| `prose-style` | Removes LLM writing tics; gives feedback on a draft without rewriting it; keeps your corrections as a growing house style | `llm-isms`, `prose-feedback`, `house-style` | `llm-isms` |
 | `claim-sourcing` | Makes every claim rest on evidence a reader could check | `source-every-claim`, `skeptic`, `second-opinion` | `claim-ledger` |
 | `publish-gate` | Order of checks before anything is posted; a new agent reads the draft as its audience would; leak check | `before-publishing`, `fresh-reader` | `leak-check` |
 
@@ -58,6 +58,12 @@ the work.
 Add your own patterns, or switch built-in ones off (if you like
 em-dashes, say), in `~/.config/llm-isms/patterns.tsv`; `llm-isms --help`
 gives the format.
+
+`prose-feedback` reviews a draft without rewriting it: each note quotes
+the exact words, says what a reader will do there and why, and is marked
+must, should or could.  Recurring patterns get one note, not one per
+instance, and the author keeps the pen.  Use it on other people's
+writing, or on your own when you want to learn rather than be edited.
 
 `house-style` keeps your recurring edits in `~/.config/house-style.md`
 and adds to it each time you correct a draft, so each correction is made

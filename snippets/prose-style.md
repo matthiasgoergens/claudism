@@ -13,6 +13,8 @@
 - Claim exactly what was done; keep only the precision the argument
   needs.
 - Wrap plain-text mail at 72 columns; never hard-wrap GitHub comments.
+- When I ask for feedback on writing, give notes (the `prose-feedback`
+  skill): exact quotes, why a reader trips, ranked; do not rewrite it.
 - When I correct a draft, add the correction to my house style
   (`~/.config/house-style.md`) and, if it is a phrase, to
   `~/.config/llm-isms/patterns.tsv`.
