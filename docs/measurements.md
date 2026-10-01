@@ -29,7 +29,7 @@ other 8: "byte-identical" three times, and one each of "the very",
 The lines that commit 173a3cf removed produce 50 default-set hits; the
 lines it added produce 7, all em-dashes.
 
-## A model-assisted newsletter: 10.6 per 1000 words
+## A LinkedIn newsletter: 10.6 per 1000 words
 
 "Quant Quriosity - The Quant Quarter: Q3 2026", a 752-word LinkedIn
 newsletter, as served on 2026-10-01:

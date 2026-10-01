@@ -24,7 +24,7 @@ Fenced code, inline code spans, and regions between `llm-isms: off` and
 in bulk ("X, not Y." antitheses, one-line punch paragraphs, "no longer
 a ...") and prints their rate per 1000 words.  Use the rate, not the
 individual hits: one author's edited blog prose ran at about 0.5 per
-1000 words, a model-assisted newsletter at 10.6.  As a guess, not a measured
+1000 words, a LinkedIn newsletter at 10.6.  As a guess, not a measured
 threshold: above 2 or 3, rewrite the worst ones.
 
 Run it on anything a human will read: blog posts, cover letters, issue

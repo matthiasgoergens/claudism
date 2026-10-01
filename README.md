@@ -38,7 +38,7 @@ patterns are narrow, so that a hit is usually worth fixing.
 `--strict` adds rhetorical shapes that are fine once but a tic in bulk
 ("X, not Y." antitheses, one-line punch paragraphs) as suggestions, and
 prints their rate per 1000 words.  For scale: one author's 42,000 words
-of edited blog prose came to 0.5 per 1000, and a 750-word model-assisted
+of edited blog prose came to 0.5 per 1000, and a 750-word LinkedIn
 newsletter to 10.6 (`docs/measurements.md` has the commands).
 <!-- llm-isms: on -->
 
