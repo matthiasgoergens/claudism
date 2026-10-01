@@ -1,7 +1,7 @@
 # The Quant Quarter: Q3 2026
 
-This quarter's biggest story in Asian quant was a whole team changing
-firms. The market makers' Hong Kong expansion came second.
+This quarter's top stories in Asian quant were a whole team changing
+firms and the market makers' expansion in Hong Kong.
 
 ### The Arrowpoint lift-out
 

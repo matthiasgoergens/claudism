@@ -30,7 +30,7 @@ author; the raw HTML has no character there either way.
 
 | Original | Problem | Revision |
 |----------|---------|----------|
-| "The people moved first. The offices followed. Everything else in the quarter was downstream of those two facts." | staccato opener plus a sweeping claim no one can check ("everything else") | "This quarter's biggest story in Asian quant was a whole team changing firms.  The market makers' Hong Kong expansion came second." |
+| "The people moved first. The offices followed. Everything else in the quarter was downstream of those two facts." | staccato opener plus a sweeping claim no one can check ("everything else") | "This quarter's top stories in Asian quant were a whole team changing firms and the market makers' expansion in Hong Kong." |
 | "The detail that matters: that team ran roughly $1bn" | colon reveal | the number, stated |
 | "Six people, an intact strategy, and a regional leader moved as a unit." | triplet for rhythm | folded into the sentence about the sale |
 | "The trigger was corporate, not personal." | "X, not Y" antithesis, presented as fact but it is an inference | "A change of owner is a natural moment for a team to leave" |
