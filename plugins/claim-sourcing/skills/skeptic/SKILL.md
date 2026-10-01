@@ -1,20 +1,20 @@
 ---
 name: skeptic
-description: Adversarial audit of the claims the current session relies on. Use before acting on a diagnosis, publishing a write-up or blog post, declaring success, or writing a handoff, or whenever conclusions have piled up without independent checks.
+description: Adversarial audit of the load-bearing claims in the current session. Use before acting on a diagnosis, publishing a write-up or blog post, declaring success, or writing a handoff, or whenever conclusions have piled up without independent checks.
 ---
 
 Audit the session's conclusions the way a hostile, well-informed reader
 would: assume every claim outran its evidence until shown otherwise.
 
 **Stay incremental.**  This runs often in long sessions.  Default to the
-claims the work has come to rely on since the last audit, or the specific
+claims that became load-bearing since the last audit, or the specific
 conclusion about to be acted on.  Do not re-audit claims already
 confirmed unless new evidence touches them; keep a note of earlier
 refutations so they cannot resurface.  `/skeptic full` re-audits the
 whole session; an argument narrows the focus (`/skeptic the latency
 claims`).
 
-1. **Extract the claims the next step relies on**: root causes, numbers, "X works /
+1. **Extract the load-bearing claims**: root causes, numbers, "X works /
    is verified", "the file or config says Y", "the build / backup / test
    succeeded", anything a draft asserts.  Ignore incidental statements.
 

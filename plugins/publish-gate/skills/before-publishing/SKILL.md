@@ -40,8 +40,8 @@ fixing it doubles their reading.
 5. **Fresh reader** (`fresh-reader`): an independent agent with only
    the reader's context.
 6. **Refutation** (`second-opinion`, `skeptic`): for anything making
-   claims, a different model family tries to refute the ones the
-   text relies on.  Re-run after the final edits: fixes introduce new holes.
+   claims, a different model family tries to refute the load-bearing
+   ones.  Re-run after the final edits: fixes introduce new holes.
 7. **Re-verify live state** on the day of publication: is the PR still
    open, the bug still unfixed, the number still current, the link still
    alive, the recipient address still valid?
