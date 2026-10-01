@@ -23,7 +23,7 @@ Fenced code, inline code spans, and regions between `llm-isms: off` and
 `--strict` also suggests rhetorical shapes that are fine once and a tic
 in bulk ("X, not Y." antitheses, one-line punch paragraphs, "no longer
 a ...") and prints their rate per 1000 words.  Use the rate, not the
-individual hits: one author's edited blog prose ran at about 0.5 per
+individual hits: one author's edited blog prose ran at about 0.7 per
 1000 words, a LinkedIn newsletter at 10.6.  As a guess, not a measured
 threshold: above 2 or 3, rewrite the worst ones.
 
@@ -80,6 +80,16 @@ live where there are none.  Label the data; use calendar time.
 
 **No inflated combat metaphors.**  "Weaponise", "assault on", "battle
 lines" for things where nothing violent happens.
+
+**Is the grammar as simple as the idea allows?**  Prefer subject, verb,
+object.  Long sentences are fine; nested ones are the problem.  Split a
+sentence that stacks relative clauses ("the time the lock is held,
+which the profile showed was where the time went"), and put the actor
+first ("the fix holds the lock for less time").  `--strict` counts
+sentences with two or more relative clauses, and any over 50 words, as
+a separate rate.  Keep a complex sentence when its structure carries
+the meaning (a condition and its exception, a cause and its
+consequence).
 
 **Is precision doing work, or decorating?**  "byte-identical" where
 "unchanged" is meant.  "every image I have" where the claim is about the

@@ -33,6 +33,9 @@ n=$("$lint" --strict "$here/llm-isms/strict.md" | grep --count 'consider:')
 expect 0 "llm-isms --strict suggests the antithesis and the fragment (got $n)" test "$n" -eq 2
 expect 1 "llm-isms flags 'The detail that matters'" "$lint" "$here/llm-isms/strict.md"
 
+n=$("$lint" --strict "$here/llm-isms/nested.md" | grep --count 'nested sentence (')
+expect 0 "llm-isms --strict flags the nested sentence, not its rewrite (got $n)" test "$n" -eq 1
+
 tsv=$(mktemp); printf 'frobnicat\\w*\tpersonal test pattern\tsay what it does\n' > "$tsv"
 echo "We frobnicate the cache." > "$tsv.md"
 expect 1 "llm-isms loads personal patterns" env LLM_ISMS_PATTERNS="$tsv" "$lint" "$tsv.md"

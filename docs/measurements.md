@@ -6,7 +6,7 @@ Measured on 2026-10-01 with this repository's `llm-isms` as of the
 commit that added this file, and no personal patterns file
 (`LLM_ISMS_PATTERNS=/dev/null`).
 
-## Edited blog prose: 0.5 per 1000 words
+## Edited blog prose: 0.7 per 1000 words
 
 Corpus: the 23 posts in `content/posts/` (excluding `_index.md`) of
 https://github.com/matthiasgoergens/paquari at commit
@@ -17,17 +17,18 @@ author had already removed model-prose tells from these posts by hand
     $ cd paquari/content/posts
     $ LLM_ISMS_PATTERNS=/dev/null llm-isms --strict $(ls *.md | grep -v '^_')
     ...
-    323 flagged
-    22 to consider in 42192 words (0.5 per 1000)
+    359 flagged
+    28 to consider in 42192 words (0.7 per 1000)
+    29 nested sentences (0.7 per 1000)
 
-Of the 323 default-set hits, 315 are em-dashes, which this author uses
+Of the 359 default-set hits, 349 are em-dashes, which this author uses
 on purpose (hence `disable<TAB>em-dash` in the patterns file).  The
-other 8: "byte-identical" three times, and one each of "the very",
-"to be honest", "earned its keep", "the most interesting part" and
-"which is exactly why".
+other 10: "byte-identical" three times, "the most interesting part" and
+similar twice, and one each of "to be honest", "earned its keep", "the
+very", "which is exactly why" and "load-bearing".
 
-The lines that commit 173a3cf removed produce 50 default-set hits; the
-lines it added produce 7, all em-dashes.
+The lines that commit 173a3cf removed produce 67 default-set hits; the
+lines it added produce 8, all em-dashes.
 
 ## A LinkedIn newsletter: 10.6 per 1000 words
 
@@ -36,6 +37,7 @@ newsletter, as served on 2026-10-01:
 
     5 flagged
     8 to consider in 752 words (10.6 per 1000)
+    0 nested sentences (0.0 per 1000)
 
 The edited version (branch `trial/quant-quarter-q3-2026` of this
 repository) gives 0 and 0, but that is not independent evidence: it was

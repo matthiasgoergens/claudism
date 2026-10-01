@@ -10,8 +10,8 @@ A typical edit they produce:
 > **Before:** The fix was small.  The impact was not.  Here's the
 > thing: the cache was never the bottleneck — the lock was.
 >
-> **After:** The fix shortens the time the lock is held, which the
-> profile showed was where the time went (`profile.txt`).
+> **After:** The fix holds the lock for less time.  The profile shows
+> that most of the time went there (`profile.txt`).
 <!-- llm-isms: on -->
 
 The rules come from correcting model-written blog posts, GitHub issues
@@ -24,7 +24,7 @@ There are three packs.  Install whichever you want; none needs another.
 |------|--------------|--------|--------|
 | `prose-style` | Removes LLM writing tics; keeps your corrections as a growing house style | `llm-isms`, `house-style` | `llm-isms` |
 | `claim-sourcing` | Makes every claim rest on evidence a reader could check | `source-every-claim`, `skeptic`, `second-opinion` | `claim-ledger` |
-| `publish-gate` | Order of checks before anything is posted; fresh-reader pass; leak check | `before-publishing`, `fresh-reader` | `leak-check` |
+| `publish-gate` | Order of checks before anything is posted; a new agent reads the draft as its audience would; leak check | `before-publishing`, `fresh-reader` | `leak-check` |
 
 ## prose-style
 
@@ -38,8 +38,9 @@ patterns are narrow, so that a hit is usually worth fixing.
 `--strict` adds rhetorical shapes that are fine once but a tic in bulk
 ("X, not Y." antitheses, one-line punch paragraphs) as suggestions, and
 prints their rate per 1000 words.  For scale: one author's 42,000 words
-of edited blog prose came to 0.5 per 1000, and a 750-word LinkedIn
-newsletter to 10.6 (`docs/measurements.md` has the commands).
+of edited blog prose came to 0.7 per 1000, and a 750-word LinkedIn
+newsletter to 10.6 (`docs/measurements.md` has the commands).  It also
+counts sentences with stacked clauses, separately.
 <!-- llm-isms: on -->
 
 ```
