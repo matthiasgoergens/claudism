@@ -18,12 +18,17 @@ claims`).
    is verified", "the file or config says Y", "the build / backup / test
    succeeded", anything a draft asserts.  Ignore incidental statements.
 
-2. **Classify the evidence for each** (the same classes as
-   `source-every-claim`):
+2. **Classify the evidence for each**:
    - *measured*: command output or file contents observed in this session
    - *derived*: reasoning from stated premises
    - *reported*: from notes, docs, a subagent, or another model
    - *assumed*: no evidence at all
+
+   These are the classes `source-every-claim` uses, with one difference
+   in what counts at publication time: there, *reported* means a source
+   the reader can follow.  A note, a subagent summary or another model's
+   output is reported evidence for *you*, and a pointer to where the
+   real source is; follow it before anything is published.
 
    Watch for laundering: a claim repeated three times, or written into a
    note and read back, is still *reported*.

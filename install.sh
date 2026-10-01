@@ -14,14 +14,16 @@ set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
 copy=no
-targets=
+nl='
+'
+targets=   # newline-separated, so that paths may contain spaces
 bindir=
 packs=
 
 while [ $# -gt 0 ]; do
     case $1 in
         --copy) copy=yes ;;
-        --target) shift; targets="$targets $1" ;;
+        --target) shift; targets="$targets$1$nl" ;;
         --bin) shift; bindir=$1 ;;
         -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
         all) packs="prose-style claim-sourcing publish-gate" ;;
@@ -34,7 +36,7 @@ done
 
 if [ -z "$targets" ]; then
     for d in "$HOME/.claude/skills" "$HOME/.agents/skills"; do
-        [ -d "$d" ] && targets="$targets $d"
+        [ -d "$d" ] && targets="$targets$d$nl"
     done
 fi
 [ -n "$targets" ] || { echo "no skills directory found; pass --target DIR" >&2; exit 2; }
@@ -43,7 +45,7 @@ for pack in $packs; do
     for skill in "$here/plugins/$pack/skills"/*/; do
         skill=${skill%/}
         name=$(basename "$skill")
-        for t in $targets; do
+        printf '%s' "$targets" | while IFS= read -r t; do
             mkdir -p "$t"
             dest=$t/$name
             if [ -e "$dest" ] && [ ! -L "$dest" ]; then

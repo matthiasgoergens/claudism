@@ -15,7 +15,8 @@ an intention to be careful.
     <this skill's directory>/llm-isms FILE...
     git diff | <this skill's directory>/llm-isms -
 
-It flags narrow patterns only, so a hit is nearly always worth fixing.
+It flags narrow patterns only, so a hit is usually worth fixing; the
+fix line says when it is not.
 Fenced code, inline code spans, and regions between `llm-isms: off` and
 `llm-isms: on` markers are skipped.  `--list` prints the patterns.
 
@@ -23,8 +24,8 @@ Fenced code, inline code spans, and regions between `llm-isms: off` and
 in bulk ("X, not Y." antitheses, one-line punch paragraphs, "no longer
 a ...") and prints their rate per 1000 words.  Use the rate, not the
 individual hits: one author's edited blog prose ran at about 0.5 per
-1000 words, a model-assisted newsletter at 8.  Above 2 or 3, rewrite the
-worst ones.
+1000 words, a model-assisted newsletter at 10.6.  As a guess, not a measured
+threshold: above 2 or 3, rewrite the worst ones.
 
 Run it on anything a human will read: blog posts, cover letters, issue
 and PR bodies, commit messages, docs.  Not on code, not on private notes.

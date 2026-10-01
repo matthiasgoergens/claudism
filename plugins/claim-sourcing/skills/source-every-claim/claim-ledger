@@ -87,14 +87,44 @@ def extract(path):
     return 0
 
 
+FILE_EXT = (r"txt|log|out|md|csv|tsv|json|jsonl|ya?ml|toml|html?|xml|pdf|png|svg"
+            r"|c|h|cc|cpp|hpp|rs|go|py|ml|mli|js|ts|java|rb|sh|patch|diff|ipynb")
+
+
 def looks_local(src):
-    return bool(re.match(r"^(?:\.{0,2}/|~/|[\w.-]+/[\w./-]+)", src)) and "://" not in src
+    """A path the reader's copy of the repository should contain: anything
+    with a slash or backslash, or a bare file name with a known extension.
+    URLs and commit hashes are not checked."""
+    if "://" in src:
+        return False
+    return bool(re.match(r"^(?:\.{0,2}[/\\]|~/|[A-Za-z]:\\|[^\s/\\]+[/\\]\S)", src)
+                or re.fullmatch(r"[\w.+-]+\.(?:" + FILE_EXT + ")", src, re.IGNORECASE))
+
+
+def cited_paths(src, base):
+    """Yield (as written, resolved path) for each local path in a source
+    cell.  Parts are separated by ',' or ';'.  A part that exists as a
+    whole is one path, so names with spaces work; `backticks` are
+    stripped; otherwise each whitespace-separated word is tried."""
+    for part in re.split(r"[,;]", src):
+        part = part.strip().strip("`")
+        whole = re.sub(r":\d+(?:-\d+)?$", "", part)
+        candidates = [whole] if whole and os.path.exists(resolve(whole, base)) \
+            else [re.sub(r":\d+(?:-\d+)?$", "", w.strip("`")) for w in part.split()]
+        for c in candidates:
+            if c and looks_local(c):
+                yield c, resolve(c, base)
+
+
+def resolve(p, base):
+    p = os.path.expanduser(p)
+    return p if os.path.isabs(p) or re.match(r"^[A-Za-z]:\\", p) else os.path.join(base, p)
 
 
 def check(path):
     base = os.path.dirname(os.path.abspath(path))
     problems = rows = 0
-    with open(path, encoding="utf-8") as f:
+    with open(path, encoding="utf-8", errors="replace") as f:
         lines = f.read().split("\n")
     for ln, line in enumerate(lines, 1):
         cells = [c.strip() for c in re.split(r"(?<!\\)\|", line.strip())[1:-1]]
@@ -117,14 +147,9 @@ def check(path):
             bad("assumed: rephrase as an inference or a question, or cut it")
         if cls != "cut" and not src:
             bad("no source")
-        for part in re.split(r"[,;]\s*|\s+", src):
-            part = re.sub(r":\d+(?:-\d+)?$", "", part.strip())
-            if part and looks_local(part):
-                p = os.path.expanduser(part)
-                if not os.path.isabs(p):
-                    p = os.path.join(base, p)
-                if not os.path.exists(p):
-                    bad(f"cited artefact does not exist: {part}")
+        for written, p in cited_paths(src, base):
+            if not os.path.exists(p):
+                bad(f"cited artefact does not exist: {written}")
     if rows == 0:
         print(f"{path}: no ledger rows found; is this a ledger?")
         return 2
@@ -138,7 +163,10 @@ def main(argv):
         print(__doc__)
         return 0
     if argv[0] == "--check":
-        return max((check(p) for p in argv[1:]), default=0)
+        if len(argv) < 2:
+            print("claim-ledger --check: no ledger given", file=sys.stderr)
+            return 2
+        return max(check(p) for p in argv[1:])
     return max(extract(p) for p in argv)
 
 

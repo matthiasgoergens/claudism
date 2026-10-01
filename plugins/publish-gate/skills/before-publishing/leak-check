@@ -22,6 +22,7 @@ internal-word checks: a leaked path in a code block is still a leak.
 """
 import argparse
 import os
+import unicodedata
 import re
 import subprocess
 import sys
@@ -30,9 +31,11 @@ import sys
 # ~/ are only a WARN: "~/.config/tool/file" is a convention any reader
 # understands, while "~/prog/my-experiment" is a leak; only you can tell.
 LOCAL_PATH = re.compile(
-    r"(?:/home/\w+|/Users/\w+|/tmp/|/var/tmp/|C:\\Users\\)[^\s)\]'\"`]*")
+    r"(?:/home/\w+|/Users/\w+|/root/|/tmp/|/var/tmp/"
+    r"|\b[A-Za-z]:\\[^\s\\]+\\|\\\\[\w.-]+\\)[^\s)\]'\"`]*")
+URL = re.compile(r"\b[a-z][a-z0-9+.-]*://\S+", re.IGNORECASE)
 HOME_PATH = re.compile(r"(?<![\w/])~/[^\s)\]'\"`]+")
-HEX = re.compile(r"\b[0-9a-f]{7,40}\b")
+HEX = re.compile(r"\b[0-9a-fA-F]{7,40}\b")
 failed = 0
 
 
@@ -49,13 +52,21 @@ def internal_words():
     words = []
     try:
         with open(path, encoding="utf-8") as f:
-            for line in f:
+            for n, line in enumerate(f, 1):
                 line = line.strip()
                 if line and not line.startswith("#"):
-                    words.append(re.compile(r"\b" + line + r"\b", re.IGNORECASE))
+                    try:
+                        words.append(re.compile(r"\b(?:" + line + r")\b", re.IGNORECASE))
+                    except re.error as e:
+                        sys.exit(f"{path}:{n}: invalid regex {line!r}: {e}")
     except FileNotFoundError:
         pass
     return words
+
+
+def columns(line):
+    """Display width: wide East Asian characters take two columns."""
+    return sum(2 if unicodedata.east_asian_width(c) in "WF" else 1 for c in line)
 
 
 def hash_is_public(repo, h):
@@ -75,20 +86,22 @@ def check(name, text, args, words):
         is_fence = line.lstrip().startswith(("```", "~~~"))
         if is_fence:
             fenced = not fenced
-        for m in LOCAL_PATH.finditer(line):
+        # A path inside a public URL is part of the URL, not a leak.
+        nourl = URL.sub(" ", line)
+        for m in LOCAL_PATH.finditer(nourl):
             report("FAIL", name, ln, f"local path {m.group(0)!r}", line)
-        for m in HOME_PATH.finditer(line):
+        for m in HOME_PATH.finditer(nourl):
             report("WARN", name, ln,
                    f"home-relative path {m.group(0)!r}: generic, or yours?", line)
         for w in words:
             if w.search(line):
                 report("FAIL", name, ln, f"internal word {w.pattern[2:-2]!r}", line)
         if args.repo and not line.lstrip().startswith(("base-commit:", "index ")):
-            for m in HEX.finditer(line):
-                if not re.search(r"[a-f]", m.group(0)):
+            for m in HEX.finditer(nourl):
+                h = m.group(0).lower()
+                if not re.search(r"[a-f]", h):
                     continue
-                pub = hash_is_public(args.repo, m.group(0))
-                if pub is False:
+                if hash_is_public(args.repo, h) is False:
                     report("FAIL", name, ln,
                            f"commit {m.group(0)} exists only locally", line)
         if not fenced and not is_fence:
@@ -96,16 +109,17 @@ def check(name, text, args, words):
 
     if args.medium == "mail":
         for ln, line in prose:
-            if (len(line) > 72 and not line.lstrip().startswith(">")
+            width = columns(line)
+            if (width > 72 and not line.lstrip().startswith(">")
                     and "://" not in line):
-                report("FAIL", name, ln, f"{len(line)} columns (> 72) for mail", line)
+                report("FAIL", name, ln, f"{width} columns (> 72) for mail", line)
     elif args.medium == "github":
-        # A hard-wrapped paragraph: consecutive plain prose lines that are
-        # each long enough to have been wrapped by an editor.
+        # A hard-wrapped paragraph: three or more consecutive plain prose
+        # lines (not list items, quotes, tables or headings).
         run = 0
         for ln, line in prose:
             plain = line.strip() and not re.match(r"\s*(?:[-*+>|#]|\d+\.)", line)
-            if plain and 55 <= len(line) <= 80:
+            if plain:
                 run += 1
                 if run == 3:
                     report("WARN", name, ln,
@@ -122,8 +136,11 @@ def main():
     args = ap.parse_args()
     words = internal_words()
     for f in args.files:
-        with open(f, encoding="utf-8", errors="replace") as fh:
-            check(f, fh.read(), args, words)
+        try:
+            with open(f, encoding="utf-8", errors="replace") as fh:
+                check(f, fh.read(), args, words)
+        except OSError as e:
+            sys.exit(f"{f}: {e}")
     print(f"\n{failed} FAIL" if failed else "\nno FAILs")
     return 1 if failed else 0
 

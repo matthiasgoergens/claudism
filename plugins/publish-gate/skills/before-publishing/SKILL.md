@@ -17,7 +17,9 @@ posting.  Run them before.
 
 **Findings accumulate into one post**, rather than arriving as a stream
 of corrections.  If a new finding arrives after posting, batch it with
-whatever else is pending; do not reply to yourself.
+whatever else is pending; do not reply to yourself.  The exception is a
+correction that changes what a reader would do (a fix that is wrong, a
+data-loss or security risk): post that at once, on its own.
 
 ## Order of checks
 

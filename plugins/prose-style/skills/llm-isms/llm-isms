@@ -40,8 +40,11 @@ PATTERNS = [
     # Precision that decorates instead of informing
     (r'byte-identical',
      "over-precision",
-     "'unchanged' or 'the same'.  Nobody suspected a half-identical file"),
-    (r'\b(?:images|files|cases|commits|inputs|samples)\s+I\s+have\b',
+     "'unchanged' or 'the same', unless byte equality is the point (signed "
+     "artefacts, reproducible builds)"),
+    # Only at the end of a clause: "the files I have." claims a corpus,
+    # "the files I have cited" is scoped and fine.
+    (r'\b(?:images|files|cases|commits|inputs|samples)\s+I\s+have\b(?=\s*(?:[,.;:)]|$))',
      "claims exhaustiveness over a corpus",
      "'... I tested': say what you did, not what you own"),
 
@@ -52,9 +55,6 @@ PATTERNS = [
     (r"\bthat is (?:weaker|stronger) than it sounds\b",
      "defending a claim instead of narrowing it",
      "make the claim smaller; it will not need defending"),
-    (r'\bnot just\b.{0,40}\bbut\b',
-     "escalation cliche",
-     "usually one of the two halves is enough"),
     (r'\b[Yy]ou do not \w+[^.]{0,40}, you \w+',
      "slogan antithesis",
      "explain the mechanism plainly"),
@@ -90,7 +90,7 @@ PATTERNS = [
     (r'\b(?:scary|shocking|surprising) number\b',
      "drama about a number",
      "name the number"),
-    (r'\bthe very\b',
+    (r'\bthe very\b(?! (?:least|most|end|beginning|start|first|last|top|bottom)\b)',
      "emphasis doing the work of evidence",
      "drop 'very'; if it mattered, show it"),
 
@@ -99,7 +99,7 @@ PATTERNS = [
      r"|\bThe \w+ (?:row|part|bit|line|step) is the point\b",
      "announced significance",
      "if it matters, the reader will see it; cut the announcement"),
-    (r"\b[Tt]he (?:detail|thing|part|number|fact|point|question) (?:that|which) (?:matters|counts)\b"
+    (r"\b[Tt]he (?:detail|thing|part|number|fact|point|question) (?:that|which) (?:matters|counts)(?: (?:here|most))?(?::| is\b)"
      r"|\bHere's what (?:matters|counts)\b",
      "colon-reveal setup",
      "state the detail; if it matters, the reader will see it"),
@@ -112,12 +112,6 @@ PATTERNS = [
     (r"\bwhich is (?:exactly|precisely) why\b",
      "clincher",
      "give the reason plainly, or drop the inference if it is not sourced"),
-    (r"\b(?:isn't|is not|wasn't|was not) [^.]{1,60}\. (?:It's|It is|It was)\b",
-     "'not X. It's Y' reversal",
-     "say what it is; drop the strawman"),
-    (r"\b(?:is|was|are|were) the right order\b",
-     "verdict instead of report",
-     "report the sequence; let the reader judge it"),
     (r"\b(?:is|was) the interesting (?:part|bit|one)\b|\bmore interesting than\b"
      r"|\b(?:most|more) interesting (?:one|part|thing)\b",
      "announced interestingness",
@@ -167,6 +161,26 @@ PATTERNS = [
      "stock phrase",
      "say what follows from it"),
 
+    # Classic stock phrases of model prose
+    (r"\bA key (?:insight|takeaway|lesson) (?:emerges|here)\b|\bThe key takeaway\b",
+     "announced insight",
+     "state the insight"),
+    (r"\bIn today's (?:fast-(?:paced|evolving|changing)|rapidly (?:evolving|changing)|ever-changing)\b",
+     "stock opener",
+     "cut it and start with the subject"),
+    (r"\b(?:strikes?|striking|finds?|finding) the (?:perfect|right|ideal) balance\b",
+     "stock phrase",
+     "say what is traded for what"),
+    (r"\bThe bottom line(?: is)?\b|\bNeedless to say\b|\bImagine a world\b",
+     "stock phrase",
+     "cut the frame; say the thing"),
+    (r"\bThe (?:implications|consequences|stakes) (?:are|could be) (?:profound|enormous|huge|far-reaching)\b",
+     "inflated stakes",
+     "name the implication"),
+    (r"\bNot only (?:does|did|is|was|are|were|can|will)\b[^.]{0,80}\b(?:but|it|they) also\b",
+     "escalation cliche",
+     "one of the two halves is usually enough"),
+
     # Chat register leaking into a document
     (r'\b(?:I hope this helps|Hope this helps|Happy to help|Great question)\b',
      "chat register",
@@ -181,6 +195,15 @@ PATTERNS = [
 # good prose.  Reported as "consider", never counted towards the exit
 # status, so the default run stays high-precision.
 STRICT = [
+    (r"\bnot just\b.{0,40}\bbut\b",
+     "'not just X but Y' escalation",
+     "usually one of the two halves is enough"),
+    (r"\b(?:isn't|is not|wasn't|was not) [^.]{1,60}\. (?:It's|It is|It was)\b",
+     "'not X. It's Y' reversal",
+     "fine to correct a likely misreading; a tic when the strawman is invented"),
+    (r"\b(?:is|was|are|were) the right order\b",
+     "verdict instead of report",
+     "report the sequence; let the reader judge it"),
     (r"\b\w+, not (?:a |an |the )?\w+(?: \w+){0,2}\.(?:\s|$)",
      "'X, not Y.' antithesis",
      "one or two per piece is fine; more is a tic.  Say what it is"),

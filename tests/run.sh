@@ -24,8 +24,11 @@ expect 0 "llm-isms ignores code and exempt regions" "$lint" "$here/llm-isms/nega
 expect 0 "llm-isms: marker mentioned in prose does not end a region" "$lint" "$here/llm-isms/marker-in-prose.md"
 expect 0 "llm-isms: its own SKILL.md is exempt"   "$lint" "$root/plugins/prose-style/skills/llm-isms/SKILL.md"
 n=$("$lint" "$here/llm-isms/positive.md" | grep --count '^    ->')
-expect 0 "llm-isms flags all 16 planted tics (got $n)" test "$n" -eq 16
+expect 0 "llm-isms flags all 15 planted tics (got $n)" test "$n" -eq 15
 
+expect 0 "llm-isms passes good prose written by a reviewer to break it" "$lint" "$here/llm-isms/review-good.md"
+n=$("$lint" "$here/llm-isms/review-bad.md" | grep --count '^    ->')
+expect 0 "llm-isms flags all 8 tics written by a reviewer (got $n)" test "$n" -eq 8
 n=$("$lint" --strict "$here/llm-isms/strict.md" | grep --count 'consider:')
 expect 0 "llm-isms --strict suggests the antithesis and the fragment (got $n)" test "$n" -eq 2
 expect 1 "llm-isms flags 'The detail that matters'" "$lint" "$here/llm-isms/strict.md"
@@ -45,6 +48,9 @@ expect 0 "claim-ledger --check passes a sourced ledger" "$ledger" --check "$here
 expect 1 "claim-ledger --check fails an unsourced ledger" "$ledger" --check "$here/claim-ledger/bad.claims.md"
 n=$("$ledger" --check "$here/claim-ledger/bad.claims.md" | grep --count 'claim [0-9]')
 expect 0 "claim-ledger reports missing artefact, assumed, no class, no source (got $n)" test "$n" -eq 4
+
+n=$("$ledger" --check "$here/claim-ledger/edge.claims.md" | grep --count 'does not exist')
+expect 0 "claim-ledger: bare and Windows paths checked, spaces and URLs fine (got $n)" test "$n" -eq 2
 
 leak=$root/plugins/publish-gate/skills/before-publishing/leak-check
 expect 1 "leak-check flags local paths and internal words" env PUBLISH_GATE_WORDS="$here/leak-check/words.txt" "$leak" "$here/leak-check/leaky.md"

@@ -13,7 +13,10 @@ who starts from zero can.
 
 1. **Use a genuinely fresh agent**: a new subagent or another tool's
    headless mode, *not* a fork of this session.  A fork inherits the
-   context that makes the leaks invisible.
+   context that makes the leaks invisible.  Another tool may mean another
+   vendor: sending the draft there publishes it to them, so check what
+   the user has approved first (unpublished or confidential text needs
+   their permission; a local subagent does not).
 2. **Give it only what the reader has**: the draft, the public thread or
    page it will appear in, and the project's public presence (repository,
    docs, earlier posts).  Not your notes, not the session, not the local

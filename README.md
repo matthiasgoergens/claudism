@@ -14,9 +14,9 @@ A typical edit they produce:
 > sold the unit to Cantor Fitzgerald (Bloomberg, 13 August).
 <!-- llm-isms: on -->
 
-The rules come from a few months of correcting model-written blog
-posts, GitHub issues and pull requests, and Linux kernel patches.  Most
-of them keep a one-line note of the case that prompted them.
+The rules come from correcting model-written blog posts, GitHub issues
+and pull requests, and Linux kernel patches.  Most of the judgement
+rules in the skills keep a one-line note of the case that prompted them.
 
 There are three packs.  Install whichever you want; none needs another.
 
@@ -34,12 +34,12 @@ once: em-dashes and their ` -- ` stand-ins, announced significance
 ("That's the tell."), colon reveals ("The detail that matters:"),
 teasers, slogans, moral closers, self-certified honesty ("one honest
 caveat"), stock section headings ("What this is not").  The default
-patterns are narrow, so that a hit is almost always worth fixing.
+patterns are narrow, so that a hit is usually worth fixing.
 `--strict` adds rhetorical shapes that are fine once but a tic in bulk
 ("X, not Y." antitheses, one-line punch paragraphs) as suggestions, and
 prints their rate per 1000 words.  For scale: one author's 42,000 words
-of edited blog prose came to 0.5 per 1000; a 750-word model-assisted
-newsletter came to 8.
+of edited blog prose came to 0.5 per 1000, and a 750-word model-assisted
+newsletter to 10.6 (`docs/measurements.md` has the commands).
 <!-- llm-isms: on -->
 
 ```
