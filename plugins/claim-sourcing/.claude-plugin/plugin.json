@@ -1,0 +1,9 @@
+{
+  "name": "claim-sourcing",
+  "version": "0.1.0",
+  "description": "Make every claim in a draft rest on evidence a reader could check: claim ledger, artefact checks, overclaim hunting, skeptic audits, cross-model refutation.",
+  "author": {
+    "name": "Matthias Görgens",
+    "url": "https://github.com/matthiasgoergens"
+  }
+}

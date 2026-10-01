@@ -1,0 +1,13 @@
+{
+  "name": "prose-style",
+  "version": "0.1.0",
+  "description": "Catch LLM writing tics in prose (a mechanical checker plus judgement checks) and keep a growing personal house style.",
+  "author": {
+    "name": "Matthias Görgens",
+    "url": "https://github.com/matthiasgoergens"
+  },
+  "homepage": "https://github.com/matthiasgoergens/claudism",
+  "repository": "https://github.com/matthiasgoergens/claudism",
+  "license": "MIT",
+  "skills": "./skills"
+}

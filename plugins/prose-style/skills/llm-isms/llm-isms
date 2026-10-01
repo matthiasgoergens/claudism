@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+"""Flag known LLM writing tics in prose meant for human readers.
+
+Usage: llm-isms FILE...            check files
+       git diff | llm-isms -       check stdin
+       llm-isms --list             print the active patterns
+
+Exits 1 if anything is flagged.  The patterns are deliberately narrow,
+so that a hit is nearly always worth fixing and the check stays worth
+running.  Add a pattern every time a new tic is caught.
+
+Not checked: fenced code blocks (```), inline `code spans`, and lines
+between "llm-isms: off" and "llm-isms: on" markers, each on a line of
+its own, optionally as an HTML or # comment (use these in files that
+quote the patterns as examples).
+
+Personal patterns: a tab-separated file of  regex<TAB>problem<TAB>fix
+lines (blank lines and # comments allowed) at $LLM_ISMS_PATTERNS, or
+~/.config/llm-isms/patterns.tsv.  They are added to the built-in ones.
+A line  disable<TAB>PROBLEM  turns off the built-in patterns with that
+problem name (as printed by --list), e.g.  disable<TAB>em-dash  for a
+writer who uses em-dashes on purpose.
+"""
+import os
+import re
+import sys
+
+# (regex, what is wrong, what to do instead).  Matched case-insensitively.
+PATTERNS = [
+    # Punctuation
+    (r' -- ',
+     "em-dash wearing hyphens",
+     "restructure: full stop, comma, colon or brackets.  Banning the em-dash "
+     "and getting ' -- ' instead complies with the letter, not the point"),
+    (r'—',
+     "em-dash",
+     "decide whether it is one thought or two, and punctuate accordingly"),
+
+    # Precision that decorates instead of informing
+    (r'byte-identical',
+     "over-precision",
+     "'unchanged' or 'the same'.  Nobody suspected a half-identical file"),
+    (r'\b(?:images|files|cases|commits|inputs|samples)\s+I\s+have\b',
+     "claims exhaustiveness over a corpus",
+     "'... I tested': say what you did, not what you own"),
+
+    # Sentences shaped like insight
+    (r'\brather than merely\b',
+     "sounds like insight, carries none",
+     "state the two things plainly"),
+    (r"\bthat is (?:weaker|stronger) than it sounds\b",
+     "defending a claim instead of narrowing it",
+     "make the claim smaller; it will not need defending"),
+    (r'\bnot just\b.{0,40}\bbut\b',
+     "escalation cliche",
+     "usually one of the two halves is enough"),
+    (r'\b[Yy]ou do not \w+[^.]{0,40}, you \w+',
+     "slogan antithesis",
+     "explain the mechanism plainly"),
+    (r'\bcuts both ways\b',
+     "cliche",
+     "say which two ways"),
+    (r'\b\w+s deserve (?:reproducers|tests|a \w+)\b',
+     "aphoristic justification",
+     "say what you did and why"),
+    (r'\bwhich is what a \w+ should do\b',
+     "smug restatement",
+     "the result already said it"),
+
+    # Verbal flourish: drama, teasers, reveals, morals
+    (r'\b(?:everyone|everybody|nobody|no one)\b[^.]{0,40}\b(?:filed away|written off|forgot(?:ten)?|assumed|took for granted)\b',
+     "dramatic claim about what everyone thought",
+     "you do not know what everyone thought; state the plain fact"),
+    (r'\bfiled away as\b',
+     "dramatic framing",
+     "say what happened, plainly"),
+    (r'\bquietly (?:costs|breaks|slows|kills|eats|undoes)\b',
+     "drama adverb",
+     "drop 'quietly'; give the number"),
+    (r'\b(?:the story|things) (?:got|gets) (?:more )?interesting\b',
+     "teaser",
+     "say what happened next"),
+    (r'\b[Tt]he (?:most interesting|real) (?:find|lesson|story|problem)\b',
+     "colon-reveal setup",
+     "state the finding directly"),
+    (r'\b(?:[Tt]hat|[Tt]his) is the usual fate\b',
+     "moral-of-the-story closer",
+     "state the specific fact instead"),
+    (r'\b(?:scary|shocking|surprising) number\b',
+     "drama about a number",
+     "name the number"),
+    (r'\bthe very\b',
+     "emphasis doing the work of evidence",
+     "drop 'very'; if it mattered, show it"),
+
+    # Announcing significance instead of showing it
+    (r"\b(?:That's|That is|This is|Which is|And that's) (?:the (?:whole )?point|what matters)\b"
+     r"|\bThe \w+ (?:row|part|bit|line|step) is the point\b",
+     "announced significance",
+     "if it matters, the reader will see it; cut the announcement"),
+    (r"\b(?:is|was) the interesting (?:part|bit|one)\b|\bmore interesting than\b"
+     r"|\b(?:most|more) interesting (?:one|part|thing)\b",
+     "announced interestingness",
+     "show the interesting thing; let the reader decide"),
+    (r"\bHere(?:'s| is) the (?:turn|thing|catch|twist|kicker|kicker)\b",
+     "teaser",
+     "state it"),
+    (r"\b(?:is|serves as) a (?:stark |useful |good )?reminder that\b",
+     "moral framing",
+     "state the fact; the reader can be reminded on their own"),
+    (r"\bThis is how \w+(?: \w+)? (?:is|was|gets) born\b",
+     "origin-myth flourish",
+     "describe the step plainly"),
+    (r"\bearned its keep\b|\bdoes what it says on the tin\b",
+     "folksy clincher",
+     "say what it did"),
+    (r"^(?:Tidy|Neat|Elegant|Simple|Clean|Plausible), (?:and|but) (?:false|wrong)\.",
+     "punchy fragment",
+     "say what was wrong with it in a full sentence"),
+
+    # Self-certified virtue
+    (r"\b(?:one|an|the|my) honest (?:caveat|version|answer|description|account|assessment)\b"
+     r"|\bhonestly (?:measured|reported|stated)\b",
+     "self-certified honesty",
+     "drop 'honest': it implies the rest was not.  Just give the caveat"),
+    (r"\b(?:to be (?:fully |completely )?(?:honest|transparent|clear)|let me be (?:honest|clear))\b",
+     "sincerity marker",
+     "delete it"),
+
+    # Stock section headings
+    (r"^#+\s*(?:What this is not|What this isn't|Where this could go|Where (?:do|does) (?:we|this) go from here"
+     r"|What's (?:left|next)|Coda\b|What this says about|Why this matters|The bigger picture|Key takeaways)",
+     "stock section heading",
+     "name the section after its content"),
+
+    # Filler and stock phrases
+    (r'\b(?:It is|It\'s) (?:worth noting|important to note|worth mentioning)\b',
+     "filler preamble",
+     "delete it and state the thing"),
+    (r'\b(?:delve|leverage|seamless(?:ly)?|robustly|myriad|plethora|tapestry)\b',
+     "register mismatch",
+     "use the plain word"),
+    (r'\ba testament to\b|\bin the realm of\b|\bnavigat\w+ the compl',
+     "stock phrase",
+     "say the specific thing"),
+    (r'\bunderscores? the importance\b',
+     "stock phrase",
+     "say what follows from it"),
+
+    # Chat register leaking into a document
+    (r'\b(?:I hope this helps|Hope this helps|Happy to help|Great question)\b',
+     "chat register",
+     "cut it; the document is not a conversation"),
+    (r'^\s*(?:In conclusion|In summary|To summari[sz]e),',
+     "essay closer",
+     "if the summary is needed, it goes first; otherwise cut it"),
+]
+
+
+def load_extra():
+    """Return (extra patterns, set of disabled problem names)."""
+    path = os.environ.get("LLM_ISMS_PATTERNS") or os.path.expanduser(
+        "~/.config/llm-isms/patterns.tsv")
+    extra, disabled = [], set()
+    try:
+        with open(path, encoding="utf-8") as f:
+            for n, line in enumerate(f, 1):
+                line = line.rstrip("\n")
+                if not line.strip() or line.lstrip().startswith("#"):
+                    continue
+                parts = line.split("\t")
+                if len(parts) == 2 and parts[0] == "disable":
+                    disabled.add(parts[1].strip())
+                    continue
+                if len(parts) != 3:
+                    print(f"{path}:{n}: expected regex<TAB>problem<TAB>fix",
+                          file=sys.stderr)
+                    continue
+                re.compile(parts[0])
+                extra.append(tuple(parts))
+    except FileNotFoundError:
+        pass
+    return extra, disabled
+
+
+# A marker only counts on a line of its own, so prose that merely
+# mentions the markers cannot switch checking off or back on.
+MARKER = re.compile(r"^\s*(?:<!--|#)?\s*llm-isms:\s*(off|on)\s*(?:-->)?\s*$")
+
+
+def prose_lines(text):
+    """Yield (line number, line) for prose only: skips fenced code,
+    off/on regions, and blanks out inline code spans."""
+    fenced = False
+    off = False
+    for i, line in enumerate(text.split("\n"), 1):
+        marker = MARKER.match(line)
+        if marker:
+            off = marker.group(1) == "off"
+            continue
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+            continue
+        if fenced or off:
+            continue
+        yield i, re.sub(r"`[^`]*`", "` `", line)
+
+
+def check(name, text, patterns):
+    hits = 0
+    for i, line in prose_lines(text):
+        for rx, what, fix in patterns:
+            if re.search(rx, line, re.IGNORECASE):
+                hits += 1
+                print(f"{name}:{i}: {what}")
+                print(f"    {line.strip()[:100]}")
+                print(f"    -> {fix}")
+    return hits
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help"):
+        print(__doc__)
+        return 0
+    extra, disabled = load_extra()
+    unknown = disabled - {what for _, what, _ in PATTERNS}
+    if unknown:
+        print(f"llm-isms: cannot disable unknown pattern(s) {sorted(unknown)}",
+              file=sys.stderr)
+    patterns = [p for p in PATTERNS if p[1] not in disabled] + extra
+    if argv[0] == "--list":
+        for rx, what, fix in patterns:
+            print(f"{what}\n    {rx}\n    -> {fix}")
+        return 0
+    total = 0
+    for a in argv:
+        if a == "-":
+            total += check("<stdin>", sys.stdin.read(), patterns)
+        else:
+            try:
+                with open(a, encoding="utf-8", errors="replace") as f:
+                    total += check(a, f.read(), patterns)
+            except OSError as e:
+                print(f"{a}: {e}", file=sys.stderr)
+                return 2
+    print(f"\n{total} flagged" if total else "\nclean")
+    return 1 if total else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

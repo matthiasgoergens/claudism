@@ -1,0 +1,28 @@
+{
+  "name": "claudism",
+  "owner": {
+    "name": "Matthias Görgens",
+    "url": "https://github.com/matthiasgoergens"
+  },
+  "metadata": {
+    "description": "Skills that make AI-written prose less annoying and better sourced.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "prose-style",
+      "description": "Catch LLM writing tics in prose (a mechanical checker plus judgement checks) and keep a growing personal house style.",
+      "source": "./plugins/prose-style"
+    },
+    {
+      "name": "claim-sourcing",
+      "description": "Make every claim in a draft rest on evidence a reader could check: claim ledger, artefact checks, overclaim hunting, skeptic audits, cross-model refutation.",
+      "source": "./plugins/claim-sourcing"
+    },
+    {
+      "name": "publish-gate",
+      "description": "The order of checks before prose leaves the machine, a fresh-reader pass with only the audience's context, and a leak checker for local paths, hashes and internal names.",
+      "source": "./plugins/publish-gate"
+    }
+  ]
+}

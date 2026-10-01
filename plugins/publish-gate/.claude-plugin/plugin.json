@@ -1,0 +1,9 @@
+{
+  "name": "publish-gate",
+  "version": "0.1.0",
+  "description": "The order of checks before prose leaves the machine, a fresh-reader pass with only the audience's context, and a leak checker for local paths, hashes and internal names.",
+  "author": {
+    "name": "Matthias Görgens",
+    "url": "https://github.com/matthiasgoergens"
+  }
+}

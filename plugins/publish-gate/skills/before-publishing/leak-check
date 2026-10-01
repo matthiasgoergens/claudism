@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""Mechanical checks on prose before it leaves the machine.
+
+Usage: leak-check [--medium mail|github|blog] [--repo DIR] FILE...
+
+Checks, per file:
+  - local-only references a reader cannot resolve: absolute paths into
+    a home directory, /tmp or /var/tmp (FAIL), and ~/ paths (WARN, since
+    ~/.config/tool is generic but ~/my-experiment is not);
+  - your own internal words (run names, agent and tool names, hostnames)
+    from ~/.config/publish-gate/internal-words.txt or
+    $PUBLISH_GATE_WORDS, one word or regex per line;
+  - with --repo, commit hashes that exist only locally (not contained in
+    any remote-tracking branch), which nobody else can look up;
+  - wrapping for the medium: 'mail' wants lines of at most 72 columns;
+    'github' wants paragraphs NOT hard-wrapped, since GitHub renders a
+    single newline in comments and issues as a line break.
+
+Prints FAIL / WARN lines and exits 1 if any FAIL was printed.  Fenced
+code blocks are skipped for the prose checks but not for the path and
+internal-word checks: a leaked path in a code block is still a leak.
+"""
+import argparse
+import os
+import re
+import subprocess
+import sys
+
+# Absolute paths that name one machine or user are a FAIL.  Paths under
+# ~/ are only a WARN: "~/.config/tool/file" is a convention any reader
+# understands, while "~/prog/my-experiment" is a leak; only you can tell.
+LOCAL_PATH = re.compile(
+    r"(?:/home/\w+|/Users/\w+|/tmp/|/var/tmp/|C:\\Users\\)[^\s)\]'\"`]*")
+HOME_PATH = re.compile(r"(?<![\w/])~/[^\s)\]'\"`]+")
+HEX = re.compile(r"\b[0-9a-f]{7,40}\b")
+failed = 0
+
+
+def report(sev, name, ln, msg, line):
+    global failed
+    if sev == "FAIL":
+        failed += 1
+    print(f"{sev}: {name}:{ln}: {msg}\n      {line.strip()[:100]}")
+
+
+def internal_words():
+    path = os.environ.get("PUBLISH_GATE_WORDS") or os.path.expanduser(
+        "~/.config/publish-gate/internal-words.txt")
+    words = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    words.append(re.compile(r"\b" + line + r"\b", re.IGNORECASE))
+    except FileNotFoundError:
+        pass
+    return words
+
+
+def hash_is_public(repo, h):
+    if subprocess.run(["git", "-C", repo, "cat-file", "-e", f"{h}^{{commit}}"],
+                      capture_output=True).returncode != 0:
+        return None  # not a commit here; may be a hash from another project
+    r = subprocess.run(["git", "-C", repo, "branch", "--remotes", "--contains", h],
+                       capture_output=True, text=True)
+    return bool(r.stdout.strip())
+
+
+def check(name, text, args, words):
+    lines = text.split("\n")
+    fenced = False
+    prose = []
+    for ln, line in enumerate(lines, 1):
+        is_fence = line.lstrip().startswith(("```", "~~~"))
+        if is_fence:
+            fenced = not fenced
+        for m in LOCAL_PATH.finditer(line):
+            report("FAIL", name, ln, f"local path {m.group(0)!r}", line)
+        for m in HOME_PATH.finditer(line):
+            report("WARN", name, ln,
+                   f"home-relative path {m.group(0)!r}: generic, or yours?", line)
+        for w in words:
+            if w.search(line):
+                report("FAIL", name, ln, f"internal word {w.pattern[2:-2]!r}", line)
+        if args.repo and not line.lstrip().startswith(("base-commit:", "index ")):
+            for m in HEX.finditer(line):
+                if not re.search(r"[a-f]", m.group(0)):
+                    continue
+                pub = hash_is_public(args.repo, m.group(0))
+                if pub is False:
+                    report("FAIL", name, ln,
+                           f"commit {m.group(0)} exists only locally", line)
+        if not fenced and not is_fence:
+            prose.append((ln, line))
+
+    if args.medium == "mail":
+        for ln, line in prose:
+            if (len(line) > 72 and not line.lstrip().startswith(">")
+                    and "://" not in line):
+                report("FAIL", name, ln, f"{len(line)} columns (> 72) for mail", line)
+    elif args.medium == "github":
+        # A hard-wrapped paragraph: consecutive plain prose lines that are
+        # each long enough to have been wrapped by an editor.
+        run = 0
+        for ln, line in prose:
+            plain = line.strip() and not re.match(r"\s*(?:[-*+>|#]|\d+\.)", line)
+            if plain and 55 <= len(line) <= 80:
+                run += 1
+                if run == 3:
+                    report("WARN", name, ln,
+                           "looks hard-wrapped; GitHub will render the breaks", line)
+            else:
+                run = 0
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--medium", choices=["mail", "github", "blog"])
+    ap.add_argument("--repo", help="git repository to check commit hashes against")
+    ap.add_argument("files", nargs="+")
+    args = ap.parse_args()
+    words = internal_words()
+    for f in args.files:
+        with open(f, encoding="utf-8", errors="replace") as fh:
+            check(f, fh.read(), args, words)
+    print(f"\n{failed} FAIL" if failed else "\nno FAILs")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

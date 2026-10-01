@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Build and check a claim ledger for a piece of prose.
+
+Usage:
+  claim-ledger DRAFT.md > DRAFT.claims.md     extract checkable sentences
+  claim-ledger --check DRAFT.claims.md        verify every row is sourced
+
+Extraction lists each prose sentence that makes a checkable claim:
+numbers, universal words (all, every, never, always, nobody ...),
+causal words (because, causes, fixes, prevents ...), comparisons
+(faster, more than, better ...) and verification words (verified,
+measured, confirmed, shows ...).  It is a starting list, not a verdict:
+add rows for claims it missed, delete rows that are not claims.
+
+Fill in two columns per row:
+  class   measured | derived | reported | assumed | cut
+  source  where the evidence is: a saved artefact path, a URL, a commit,
+          "file.c:123", or for 'derived' the row numbers of its premises
+
+--check fails (exit 1) when a row has no class, an unknown class, no
+source (except 'cut'), class 'assumed' (rephrase it as a question or an
+inference, or cut it), or a source that looks like a local path but does
+not exist.  Fenced code blocks and inline code spans are not scanned.
+"""
+import os
+import re
+import sys
+
+TRIGGERS = [
+    ("number", r"\b\d[\d,.]*\s*(?:%|x\b|×|times\b|ms\b|s\b|µs\b|ns\b|[kMGT]i?B\b)?"),
+    ("universal", r"\b(?:all|every\w*|always|never|none|nobody|no one|anyone|"
+                  r"everyone|any|only|entirely|completely|guarantee[sd]?|impossible|"
+                  r"cannot|can't|forever|dead code)\b"),
+    ("causal", r"\b(?:because|caus\w+|due to|leads? to|results? in|therefore|"
+               r"so that|fix(?:es|ed)?|prevents?|breaks?|triggers?|explains?)\b"),
+    ("comparison", r"\b(?:faster|slower|more|less|fewer|better|worse|higher|lower|"
+                   r"larger|smaller|than|outperform\w*|regress\w*|improv\w*)\b"),
+    ("verification", r"\b(?:verified|measured|confirmed|tested|reproduced|shows?|"
+                     r"proves?|demonstrat\w+|found|observed)\b"),
+]
+CLASSES = {"measured", "derived", "reported", "assumed", "cut"}
+
+
+def prose(text):
+    out, fenced = [], False
+    for line in text.split("\n"):
+        if line.lstrip().startswith(("```", "~~~")):
+            fenced = not fenced
+            continue
+        if fenced or line.lstrip().startswith(("|", ">")):
+            out.append("")
+            continue
+        out.append(re.sub(r"`[^`]*`", "CODE", line))
+    return "\n".join(out)
+
+
+def sentences(text):
+    # Paragraphs first, so headings and list items stay separate.
+    for para in re.split(r"\n\s*\n|\n(?=\s*(?:[-*+]|\d+\.|#+)\s)", text):
+        para = " ".join(para.split())
+        if not para:
+            continue
+        for s in re.split(r"(?<=[.!?])\s+(?=[A-Z\"'(])", para):
+            s = re.sub(r"^(?:[-*+]|\d+\.|#+)\s+", "", s).strip()
+            if len(s) > 3:
+                yield s
+
+
+def extract(path):
+    with open(path, encoding="utf-8", errors="replace") as f:
+        text = prose(f.read())
+    print(f"# Claim ledger for {path}\n")
+    print("class: measured | derived | reported | assumed | cut\n")
+    print("| # | claim | triggers | class | source |")
+    print("|---|-------|----------|-------|--------|")
+    n = 0
+    for s in sentences(text):
+        hit = [name for name, rx in TRIGGERS if re.search(rx, s, re.IGNORECASE)]
+        # A bare number in a heading or list counter is not a claim.
+        if hit == ["number"] and len(s.split()) < 4:
+            continue
+        if hit:
+            n += 1
+            cell = s.replace("|", "\\|")
+            print(f"| {n} | {cell} | {', '.join(hit)} |  |  |")
+    print(f"\n{n} candidate claims.", file=sys.stderr)
+    return 0
+
+
+def looks_local(src):
+    return bool(re.match(r"^(?:\.{0,2}/|~/|[\w.-]+/[\w./-]+)", src)) and "://" not in src
+
+
+def check(path):
+    base = os.path.dirname(os.path.abspath(path))
+    problems = rows = 0
+    with open(path, encoding="utf-8") as f:
+        lines = f.read().split("\n")
+    for ln, line in enumerate(lines, 1):
+        cells = [c.strip() for c in re.split(r"(?<!\\)\|", line.strip())[1:-1]]
+        if len(cells) != 5 or not cells[0].isdigit():
+            continue
+        rows += 1
+        num, claim, _, cls, src = cells
+        cls = cls.lower()
+
+        def bad(msg):
+            nonlocal problems
+            problems += 1
+            print(f"{path}:{ln}: claim {num}: {msg}\n    {claim[:100]}")
+
+        if not cls:
+            bad("no evidence class")
+        elif cls not in CLASSES:
+            bad(f"unknown class {cls!r}")
+        elif cls == "assumed":
+            bad("assumed: rephrase as an inference or a question, or cut it")
+        if cls != "cut" and not src:
+            bad("no source")
+        for part in re.split(r"[,;]\s*|\s+", src):
+            part = re.sub(r":\d+(?:-\d+)?$", "", part.strip())
+            if part and looks_local(part):
+                p = os.path.expanduser(part)
+                if not os.path.isabs(p):
+                    p = os.path.join(base, p)
+                if not os.path.exists(p):
+                    bad(f"cited artefact does not exist: {part}")
+    if rows == 0:
+        print(f"{path}: no ledger rows found; is this a ledger?")
+        return 2
+    print(f"\n{rows} claims, {problems} problems" if problems
+          else f"\n{rows} claims, all sourced")
+    return 1 if problems else 0
+
+
+def main(argv):
+    if not argv or argv[0] in ("-h", "--help"):
+        print(__doc__)
+        return 0
+    if argv[0] == "--check":
+        return max((check(p) for p in argv[1:]), default=0)
+    return max(extract(p) for p in argv)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
