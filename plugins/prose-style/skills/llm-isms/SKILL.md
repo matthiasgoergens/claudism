@@ -28,7 +28,11 @@ individual hits: one author's edited blog prose ran at about 0.7 per
 threshold: above 2 or 3, rewrite the worst ones.
 
 Run it on anything a human will read: blog posts, cover letters, issue
-and PR bodies, commit messages, docs.  Not on code, not on private notes.
+and PR bodies, commit messages, docs.  Not on code, not on private notes,
+and not on text whose reader is an agent (skills, AGENTS.md, CLAUDE.md).
+There, meet the agent where it is: words like "load-bearing" are how it
+already thinks, and an instruction phrased in its own vocabulary is
+more likely to be followed.
 
 **When the user catches a tic the checker missed, add a pattern.**  That
 is the point of the tool, and it is cheap.  Personal patterns go in
