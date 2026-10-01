@@ -11,6 +11,9 @@ The text and the views in it are his; the edit is a suggestion.
   first, then the fact corrections.
 - `factcheck.md`: each checkable claim in the original, with a verdict
   and the public source it was checked against.
+- `feedback.md`: the same findings as notes for the author, without a
+  rewrite (the `prose-feedback` skill), for an author who would rather
+  make the edits himself.
 
 What was run, in order: `llm-isms` (and `--strict`), `claim-ledger` to
 list the 20 checkable sentences, a fact-check of each against public
