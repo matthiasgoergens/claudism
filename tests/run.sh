@@ -26,6 +26,10 @@ expect 0 "llm-isms: its own SKILL.md is exempt"   "$lint" "$root/plugins/prose-s
 n=$("$lint" "$here/llm-isms/positive.md" | grep --count '^    ->')
 expect 0 "llm-isms flags all 16 planted tics (got $n)" test "$n" -eq 16
 
+n=$("$lint" --strict "$here/llm-isms/strict.md" | grep --count 'consider:')
+expect 0 "llm-isms --strict suggests the antithesis and the fragment (got $n)" test "$n" -eq 2
+expect 1 "llm-isms flags 'The detail that matters'" "$lint" "$here/llm-isms/strict.md"
+
 tsv=$(mktemp); printf 'frobnicat\\w*\tpersonal test pattern\tsay what it does\n' > "$tsv"
 echo "We frobnicate the cache." > "$tsv.md"
 expect 1 "llm-isms loads personal patterns" env LLM_ISMS_PATTERNS="$tsv" "$lint" "$tsv.md"

@@ -1,17 +1,24 @@
 # claudism
 
-Skills for coding agents (Claude Code, Codex, Kimi Code and anything
-else that reads `SKILL.md` folders) that make the prose they write less
-annoying to read and better supported by evidence.
+Skills for coding agents that make the prose they write less annoying to
+read and better supported by evidence.  They work in Claude Code, Codex,
+Kimi Code and any other agent that reads `SKILL.md` folders.
 
-They grew out of a few months of correcting model-written drafts: blog
-posts, GitHub issues and pull requests, and patches for the Linux kernel
-mailing lists.  Each rule is there because a draft broke it and a human
-had to fix it, and most rules keep a short note of the case that
-prompted them.
+<!-- llm-isms: off -->
+A typical edit they produce:
 
-There are three packs.  Install whichever you want; none depends on
-another, though they mention each other where they overlap.
+> **Before:** The trigger was corporate, not personal.  The detail that
+> matters: the team ran roughly $1bn.  That's the tell.
+>
+> **After:** The team ran about $1bn and left after the parent company
+> was sold (Bloomberg, 13 August).
+<!-- llm-isms: on -->
+
+The rules come from a few months of correcting model-written blog
+posts, GitHub issues and pull requests, and Linux kernel patches.  Most
+of them keep a one-line note of the case that prompted them.
+
+There are three packs.  Install whichever you want; none needs another.
 
 | Pack | What it does | Skills | Script |
 |------|--------------|--------|--------|
@@ -24,57 +31,71 @@ another, though they mention each other where they overlap.
 <!-- llm-isms: off -->
 `llm-isms` is a regex checker for tics that a human reader recognises at
 once: em-dashes and their ` -- ` stand-ins, announced significance
-("That's the point."), teasers, colon reveals, slogans, moral closers,
-self-certified honesty ("one honest caveat"), stock section headings
-("What this is not"), and similar.  The patterns are narrow on purpose,
-so that a hit is almost always worth fixing.
+("That's the tell."), colon reveals ("The detail that matters:"),
+teasers, slogans, moral closers, self-certified honesty ("one honest
+caveat"), stock section headings ("What this is not").  The default
+patterns are narrow, so that a hit is almost always worth fixing.
+`--strict` adds rhetorical shapes that are fine once but a tic in bulk
+("X, not Y." antitheses, one-line punch paragraphs) as suggestions, and
+prints their rate per 1000 words.  For scale: one author's 42,000 words
+of edited blog prose came to 0.5 per 1000; a 750-word model-assisted
+newsletter came to 8.
 <!-- llm-isms: on -->
-The skill then walks the
-agent through the checks a regex cannot do: whether a neat sentence is
-still true when restated flatly, whether precision informs or decorates,
-whether a sentence narrates process instead of reporting a result.
 
 ```
 $ llm-isms draft.md
-draft.md:12: announced significance
-    That's the point.
-    -> if it matters, the reader will see it; cut the announcement
+draft.md:12: colon-reveal setup
+    The detail that matters: that team ran roughly $1bn ...
+    -> state the detail; if it matters, the reader will see it
 ```
 
+The skill then has the agent do the checks a regex cannot: whether a
+neat sentence is still true when restated flatly, whether precision
+informs or decorates, whether a sentence reports a result or narrates
+the work.
+
 Add your own patterns, or switch built-in ones off (if you like
-em-dashes, for example), in `~/.config/llm-isms/patterns.tsv`; the file
-format is described in `llm-isms --help`.
+em-dashes, say), in `~/.config/llm-isms/patterns.tsv`; `llm-isms --help`
+gives the format.
 
 `house-style` keeps your recurring edits in `~/.config/house-style.md`
-and adds to it every time you correct a draft, so you make each
-correction once.  A starter file with rules from the original author is
-included; edit it freely.
+and adds to it each time you correct a draft, so each correction is made
+once.  A starter file is included; edit it freely.
 
 ## claim-sourcing
 
-`source-every-claim` makes the agent build a claim ledger for a draft:
-every sentence with a number, a universal ("never", "anyone"), a causal
-or comparative word, or a verification word is listed, and each must be
-marked measured, derived or reported, with a source.  `claim-ledger
---check` fails on unsourced or assumed rows and on cited files that do
-not exist, which enforces "save the run before you publish the number".
-The skill also lists the traps that produce unsourced claims: summaries
-treated as citations, stale state, crafted inputs reported as
-frequencies, negatives without a positive control.
+`source-every-claim` has the agent list every checkable sentence in a
+draft (numbers, universals such as "never" or "anyone", causal and
+comparative claims, "verified") in a table called a claim ledger, and
+mark each one with its evidence:
 
-`skeptic` audits a session's load-bearing claims by evidence class.
-`second-opinion` covers asking a different model family to refute a
-claim, and how to treat what it says.
+- *measured*: observed directly, with the raw output saved;
+- *derived*: reasoned from other sourced claims;
+- *reported*: from a source the reader can follow, such as a link;
+- *assumed*: none of these, so it must be reworded as an inference or
+  question, or cut.
+
+`claim-ledger DRAFT.md` builds the table; `claim-ledger --check` fails
+on unsourced or assumed rows and on cited files that do not exist.  The
+skill also lists the usual ways unsourced claims get in: a subagent's
+summary quoted as fact, stale state, a crafted test reported as a
+frequency, "no errors" from a tool never shown to detect one.
+
+`skeptic` audits the claims a working session has come to rely on,
+before they are acted on or published.  `second-opinion` covers asking a
+different model to refute a claim, and how to weigh its answer.
 
 ## publish-gate
 
-`before-publishing` sets the order of the checks and the hand-over
-rules: the user sees the full text before it is posted, and findings
-are batched into one post instead of a stream of corrections.
-`fresh-reader` has an independent agent read the draft with only what
-its audience will have.  `leak-check` flags local paths, commit hashes
-that exist only on your machine, words from your own list of internal
-names, and wrapping that is wrong for mail or for GitHub.
+`before-publishing` sets the order of the checks above and the
+hand-over rules: the user sees the full text before anything is posted,
+and new findings are batched into one post rather than a stream of
+corrections.  `fresh-reader` has an independent agent read the draft
+with only what its audience will have and flag everything they could not
+follow.  `leak-check` flags local paths, commit hashes that exist only
+on your machine, words from your own list of internal names
+(`~/.config/publish-gate/internal-words.txt`), and wrapping that is
+wrong for mail or for GitHub.
 
 ## Installing
 
@@ -87,28 +108,36 @@ Claude Code, as plugins:
 /plugin install publish-gate@claudism
 ```
 
-Any agent that reads skill folders (this links into whichever of
-`~/.claude/skills` and `~/.agents/skills` exist, or into `--target DIR`):
+Any agent that reads skill folders: `install.sh` symlinks the skills
+into `~/.claude/skills` and `~/.agents/skills` (read by Codex and Kimi
+Code), whichever exist, or into each `--target DIR` you give.  `--copy`
+copies instead of linking.
 
 ```
 git clone https://github.com/matthiasgoergens/claudism
 cd claudism
 ./install.sh prose-style claim-sourcing       # or: ./install.sh all
-./install.sh --bin ~/.local/bin all            # also put the scripts on PATH
+./install.sh --bin ~/.local/bin all           # also put the scripts on PATH
 ```
 
-Skills load on demand.  For rules that should apply all the time, paste
-the matching file from `snippets/` into your `CLAUDE.md` or `AGENTS.md`.
+Each script sits in its skill's folder, and the skills tell the agent to
+run it from there, so agents need nothing on PATH.  To run the scripts
+yourself, use `--bin`, or call them from the clone, e.g.
+`plugins/prose-style/skills/llm-isms/llm-isms draft.md`.
 
-The scripts need only Python 3.  `tests/run.sh` runs positive and
-negative controls for all three.
+Skills load when the agent decides they apply.  For rules that should
+hold all the time, paste the matching file from `snippets/` into your
+`CLAUDE.md` or `AGENTS.md`.
+
+The scripts need only Python 3.  `tests/run.sh` checks that each one
+catches planted problems and passes clean text.
 
 ## Contributing a tic
 
 If your agent keeps doing something these packs miss, open an issue or
 a pull request with the sentence it wrote and what you changed it to.
-A pattern belongs in the checker only if it almost never fires on good
-prose.
+A pattern belongs in the default set only if it almost never fires on
+good prose; otherwise it goes in `--strict`.
 
 ## Licence
 

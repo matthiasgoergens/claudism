@@ -3,6 +3,7 @@
 
 Usage: llm-isms FILE...            check files
        git diff | llm-isms -       check stdin
+       llm-isms --strict FILE...   also suggest rhetorical shapes ("consider:")
        llm-isms --list             print the active patterns
 
 Exits 1 if anything is flagged.  The patterns are deliberately narrow,
@@ -94,10 +95,29 @@ PATTERNS = [
      "drop 'very'; if it mattered, show it"),
 
     # Announcing significance instead of showing it
-    (r"\b(?:That's|That is|This is|Which is|And that's) (?:the (?:whole )?point|what matters)\b"
+    (r"\b(?:That's|That is|This is|Which is|And that's) (?:the (?:whole )?point|the tell|the key|the story|what matters)\b"
      r"|\bThe \w+ (?:row|part|bit|line|step) is the point\b",
      "announced significance",
      "if it matters, the reader will see it; cut the announcement"),
+    (r"\b[Tt]he (?:detail|thing|part|number|fact|point|question) (?:that|which) (?:matters|counts)\b"
+     r"|\bHere's what (?:matters|counts)\b",
+     "colon-reveal setup",
+     "state the detail; if it matters, the reader will see it"),
+    (r"\bIf you (?:take|remember|read) (?:only )?one thing\b",
+     "announced significance",
+     "put the main point first and drop the frame"),
+    (r"\b(?:patterns?|things?|points?|trends?) worth (?:naming|noting|watching|mentioning)\b",
+     "announced significance",
+     "name them; the heading can say what they are"),
+    (r"\bwhich is (?:exactly|precisely) why\b",
+     "clincher",
+     "give the reason plainly, or drop the inference if it is not sourced"),
+    (r"\b(?:isn't|is not|wasn't|was not) [^.]{1,60}\. (?:It's|It is|It was)\b",
+     "'not X. It's Y' reversal",
+     "say what it is; drop the strawman"),
+    (r"\b(?:is|was|are|were) the right order\b",
+     "verdict instead of report",
+     "report the sequence; let the reader judge it"),
     (r"\b(?:is|was) the interesting (?:part|bit|one)\b|\bmore interesting than\b"
      r"|\b(?:most|more) interesting (?:one|part|thing)\b",
      "announced interestingness",
@@ -157,6 +177,27 @@ PATTERNS = [
 ]
 
 
+# --strict: rhetorical shapes that are tics in bulk but also occur in
+# good prose.  Reported as "consider", never counted towards the exit
+# status, so the default run stays high-precision.
+STRICT = [
+    (r"\b\w+, not (?:a |an |the )?\w+(?: \w+){0,2}\.(?:\s|$)",
+     "'X, not Y.' antithesis",
+     "one or two per piece is fine; more is a tic.  Say what it is"),
+    (r"\b(?:no longer|not just) (?:a |an |the )?\w+\b",
+     "contrast with an unstated past",
+     "is the old state sourced?  If not, say only the new one"),
+    # Checked only on lines that are a whole paragraph (blank line before
+    # and after); otherwise it fires on the tail of every wrapped one.
+    (r"^(?:\S+\s+){0,2}\S+\.$",
+     "fragment as a paragraph",
+     "one-line punch paragraphs ('One ask.', 'Boomerangs are back.') read as performance"),
+    (r"\b(?:every|all) (?:\w+ ){0,2}(?:CIOs?|readers?|engineers?|investors?|maintainers?|managers?)\b",
+     "universal about people",
+     "you cannot know what all of them did or read"),
+]
+
+
 def load_extra():
     """Return (extra patterns, set of disabled problem names)."""
     path = os.environ.get("LLM_ISMS_PATTERNS") or os.path.expanduser(
@@ -206,9 +247,26 @@ def prose_lines(text):
         yield i, re.sub(r"`[^`]*`", "` `", line)
 
 
-def check(name, text, patterns):
+considered = 0
+words = 0
+
+
+def check(name, text, patterns, strict=()):
+    global considered, words
+    words += len(text.split())
     hits = 0
+    raw = text.split("\n")
     for i, line in prose_lines(text):
+        alone = ((i == 1 or not raw[i - 2].strip())
+                 and (i == len(raw) or not raw[i].strip()))
+        for rx, what, fix in strict:
+            if what == "fragment as a paragraph" and not alone:
+                continue
+            if re.search(rx, line.strip(), re.IGNORECASE):
+                considered += 1
+                print(f"{name}:{i}: consider: {what}")
+                print(f"    {line.strip()[:100]}")
+                print(f"    -> {fix}")
         for rx, what, fix in patterns:
             if re.search(rx, line, re.IGNORECASE):
                 hits += 1
@@ -222,6 +280,9 @@ def main(argv):
     if not argv or argv[0] in ("-h", "--help"):
         print(__doc__)
         return 0
+    strict = ()
+    if argv[0] == "--strict":
+        strict, argv = STRICT, argv[1:]
     extra, disabled = load_extra()
     unknown = disabled - {what for _, what, _ in PATTERNS}
     if unknown:
@@ -235,15 +296,18 @@ def main(argv):
     total = 0
     for a in argv:
         if a == "-":
-            total += check("<stdin>", sys.stdin.read(), patterns)
+            total += check("<stdin>", sys.stdin.read(), patterns, strict)
         else:
             try:
                 with open(a, encoding="utf-8", errors="replace") as f:
-                    total += check(a, f.read(), patterns)
+                    total += check(a, f.read(), patterns, strict)
             except OSError as e:
                 print(f"{a}: {e}", file=sys.stderr)
                 return 2
     print(f"\n{total} flagged" if total else "\nclean")
+    if strict:
+        rate = 1000 * considered / max(words, 1)
+        print(f"{considered} to consider in {words} words ({rate:.1f} per 1000)")
     return 1 if total else 0
 
 
