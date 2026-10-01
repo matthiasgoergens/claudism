@@ -10,9 +10,11 @@ edit.
 
 ## Mechanical findings
 
-`llm-isms` on the original: 7 hits in the default set, and in `--strict`
-mode 6 rhetorical shapes in 752 words (8.0 per 1000; one author's
-edited blog prose runs at about 0.5).  On the revision: 0 and 0.
+`llm-isms` on the original: 5 hits in the default set, and in `--strict`
+mode 8 rhetorical shapes in 752 words (10.6 per 1000; one author's
+edited blog prose runs at 0.7).  On the edit: 0 and 0.  That second
+result is weak evidence, because the same agent wrote the patterns and
+the edit; the fact-check and a fresh reader were the real tests.
 
 ## Punctuation that went missing
 
