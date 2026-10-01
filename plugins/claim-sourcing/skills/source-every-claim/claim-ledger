@@ -91,14 +91,26 @@ FILE_EXT = (r"txt|log|out|md|csv|tsv|json|jsonl|ya?ml|toml|html?|xml|pdf|png|svg
             r"|c|h|cc|cpp|hpp|rs|go|py|ml|mli|js|ts|java|rb|sh|patch|diff|ipynb")
 
 
-def looks_local(src):
-    """A path the reader's copy of the repository should contain: anything
-    with a slash or backslash, or a bare file name with a known extension.
-    URLs and commit hashes are not checked."""
-    if "://" in src:
+def looks_local(src, base="."):
+    """A path the reader's copy of the repository should contain.
+
+    Checked: absolute, ./ ../ ~/ and drive-letter paths; bare file names
+    with a known extension; relative paths whose last part has a known
+    extension or whose first part exists here.  Not checked: URLs,
+    doi: identifiers, commit hashes, owner/repo names, and web addresses
+    without a scheme (bloomberg.com/markets)."""
+    if "://" in src or re.match(r"(?:doi|arxiv|isbn):", src, re.IGNORECASE):
         return False
-    return bool(re.match(r"^(?:\.{0,2}[/\\]|~/|[A-Za-z]:\\|[^\s/\\]+[/\\]\S)", src)
-                or re.fullmatch(r"[\w.+-]+\.(?:" + FILE_EXT + ")", src, re.IGNORECASE))
+    if re.match(r"^(?:\.{0,2}[/\\]|~/|[A-Za-z]:\\)", src):
+        return True
+    has_ext = re.search(r"\.(?:" + FILE_EXT + r")$", src, re.IGNORECASE)
+    parts = re.split(r"[/\\]", src)
+    if len(parts) == 1:
+        return bool(has_ext)
+    if re.fullmatch(r"[\w-]+(?:\.[\w-]+)*\.[a-z]{2,}", parts[0], re.IGNORECASE) \
+            and not os.path.exists(os.path.join(base, parts[0])):
+        return False  # a web address without a scheme
+    return bool(has_ext) or os.path.exists(os.path.join(base, parts[0]))
 
 
 def cited_paths(src, base):
@@ -106,13 +118,18 @@ def cited_paths(src, base):
     cell.  Parts are separated by ',' or ';'.  A part that exists as a
     whole is one path, so names with spaces work; `backticks` are
     stripped; otherwise each whitespace-separated word is tried."""
+    src = re.sub(r"\[[^\]]*\]\(([^)\s]+)\)", r" \1 ", src)  # [text](target)
+    whole = src.strip().strip("`")
+    if whole and os.path.exists(resolve(whole, base)):
+        yield whole, resolve(whole, base)
+        return
     for part in re.split(r"[,;]", src):
         part = part.strip().strip("`")
         whole = re.sub(r":\d+(?:-\d+)?$", "", part)
         candidates = [whole] if whole and os.path.exists(resolve(whole, base)) \
             else [re.sub(r":\d+(?:-\d+)?$", "", w.strip("`")) for w in part.split()]
         for c in candidates:
-            if c and looks_local(c):
+            if c and looks_local(c, base):
                 yield c, resolve(c, base)
 
 

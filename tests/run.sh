@@ -55,6 +55,9 @@ expect 0 "claim-ledger reports missing artefact, assumed, no class, no source (g
 n=$("$ledger" --check "$here/claim-ledger/edge.claims.md" | grep --count 'does not exist')
 expect 0 "claim-ledger: bare and Windows paths checked, spaces and URLs fine (got $n)" test "$n" -eq 2
 
+n=$("$ledger" --check "$here/claim-ledger/sources.claims.md" | grep --count 'does not exist')
+expect 0 "claim-ledger: DOI, owner/repo, bare web address pass; link target checked (got $n)" test "$n" -eq 1
+
 leak=$root/plugins/publish-gate/skills/before-publishing/leak-check
 expect 1 "leak-check flags local paths and internal words" env PUBLISH_GATE_WORDS="$here/leak-check/words.txt" "$leak" "$here/leak-check/leaky.md"
 n=$(env PUBLISH_GATE_WORDS="$here/leak-check/words.txt" "$leak" "$here/leak-check/leaky.md" | grep --count '^FAIL')

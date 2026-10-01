@@ -33,7 +33,9 @@ import sys
 LOCAL_PATH = re.compile(
     r"(?:/home/\w+|/Users/\w+|/root/|/tmp/|/var/tmp/"
     r"|\b[A-Za-z]:\\[^\s\\]+\\|\\\\[\w.-]+\\)[^\s)\]'\"`]*")
-URL = re.compile(r"\b[a-z][a-z0-9+.-]*://\S+", re.IGNORECASE)
+# A URL ends at whitespace or a comma, so "https://x,/home/me/y" still
+# has its local path checked.
+URL = re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s,]+", re.IGNORECASE)
 HOME_PATH = re.compile(r"(?<![\w/])~/[^\s)\]'\"`]+")
 HEX = re.compile(r"\b[0-9a-fA-F]{7,40}\b")
 failed = 0
