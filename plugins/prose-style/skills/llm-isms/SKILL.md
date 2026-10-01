@@ -178,4 +178,10 @@ When editing someone else's draft, their words and metaphors are theirs.
 Never override them silently; suggest improvements openly.  Cut only the
 flourishes you added.
 
+Deliver the edit as a list of changes, each with its reason (original,
+problem, suggestion), not only as a rewritten text.  The author can take
+the changes that convince them and leave the rest; a full rewrite asks
+them to accept everything at once, in a voice that is not theirs.  Offer
+the rewrite as one possible version if they want it.
+
 <!-- llm-isms: on -->
