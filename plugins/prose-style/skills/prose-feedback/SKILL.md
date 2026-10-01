@@ -78,16 +78,22 @@ in your tics.
 **If you only fix three things:** <numbers of the three notes>
 ```
 
-**Length budget:** at most half the length of the piece (400 words for
-anything over 800), at most 10 notes, at most three sentences per note.
-Feedback longer than the piece does not get read.  For a factual
-problem give the verdict and one source; the full evidence goes in a
-separate fact-check file the author can open if they want it.  If the
-author wants more detail on a note, they will ask.
+**Length follows content, not a ratio.**  A short piece with five
+factual errors can need more feedback than its own length; a long piece
+with one problem needs three lines.  What matters is that the author can
+stop reading at any point and have the most useful notes:
+
+- most important first, and "If you only fix three things" at the end;
+- each note short (a few sentences): the problem and why, not the full
+  evidence;
+- evidence in a separate file (a fact-check, a claim ledger) that the
+  note points to, so the notes stay scannable;
+- one note per pattern, not one per instance;
+- nothing said twice.
 
 Before handing it over, check that every quote that opens a note
-appears verbatim in the draft (search for it), and that the feedback
-is within budget (count the words).
+appears verbatim in the draft (search for it), and cut any note that
+repeats another.
 
 ## When the author then asks for an edit
 
